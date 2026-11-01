@@ -1,0 +1,23 @@
+{
+  "name": "taskpilot-webapp",
+  "version": "1.0.0",
+  "description": "A lightweight task management web app (REST API + web UI) built with pure Node.js and shipped with Docker.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "nodejs",
+    "rest-api",
+    "docker",
+    "task-manager"
+  ],
+  "author": "Anas Alhirthani",
+  "license": "MIT"
+}
