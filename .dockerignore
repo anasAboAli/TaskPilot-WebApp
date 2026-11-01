@@ -1,0 +1,32 @@
+# Dependencies (installed inside the image)
+node_modules
+npm-debug.log*
+
+# Local data — never bake a developer's database into the image
+data
+
+# Git & CI
+.git
+.gitignore
+.github
+
+# Docs and screenshots are not needed at runtime
+docs
+*.md
+LICENSE
+
+# Docker / tooling files
+Dockerfile
+.dockerignore
+docker-compose.yml
+Makefile
+
+# Environment & editor files
+.env
+.env.*
+.vscode
+.idea
+*.log
+.DS_Store
+Thumbs.db
+coverage
