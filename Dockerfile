@@ -45,7 +45,9 @@ WORKDIR /app
 # Copy only what the app needs at runtime
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node package.json ./
-COPY --chown=node:node src ./src
+# Source is copied FROM the test stage: this makes the runtime stage depend
+# on "test", so BuildKit always runs the tests before producing the image.
+COPY --from=test --chown=node:node /app/src ./src
 COPY --chown=node:node scripts/healthcheck.js ./scripts/healthcheck.js
 
 # Data folder for the JSON database (mount a volume here to persist tasks)
