@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskPilot — Task Manager</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/favicon.svg" alt="" width="28" height="28" />
+      <span>TaskPilot</span>
+    </div>
+    <div class="health" id="health" title="Server health">
+      <span class="dot"></span><span id="health-text">checking…</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="stats" id="stats" aria-label="Task statistics">
+      <div class="stat"><span class="num" id="s-total">0</span><span class="lbl">Total</span></div>
+      <div class="stat"><span class="num" id="s-todo">0</span><span class="lbl">To do</span></div>
+      <div class="stat"><span class="num" id="s-progress">0</span><span class="lbl">In progress</span></div>
+      <div class="stat"><span class="num" id="s-done">0</span><span class="lbl">Done</span></div>
+      <div class="stat warn"><span class="num" id="s-overdue">0</span><span class="lbl">Overdue</span></div>
+    </section>
+
+    <section class="card">
+      <h2>New task</h2>
+      <form id="task-form" autocomplete="off">
+        <input id="title" name="title" placeholder="What needs to be done?" maxlength="120" required />
+        <textarea id="description" name="description" placeholder="Details (optional)" rows="2" maxlength="1000"></textarea>
+        <div class="row">
+          <label>Priority
+            <select id="priority" name="priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <label>Due date
+            <input type="date" id="dueDate" name="dueDate" />
+          </label>
+          <button type="submit" class="primary">Add task</button>
+        </div>
+        <p class="error" id="form-error" role="alert"></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="list-head">
+        <h2>Tasks</h2>
+        <div class="filters">
+          <input id="search" type="search" placeholder="Search…" />
+          <select id="filter-status">
+            <option value="">All statuses</option>
+            <option value="todo">To do</option>
+            <option value="in_progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+          <select id="filter-priority">
+            <option value="">All priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <ul class="tasks" id="tasks"></ul>
+      <p class="empty" id="empty">No tasks yet — add your first one above.</p>
+    </section>
+  </main>
+
+  <footer class="footer">TaskPilot · Node.js + Docker · <a href="/health" target="_blank">/health</a> · <a href="/api/tasks" target="_blank">/api/tasks</a></footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
