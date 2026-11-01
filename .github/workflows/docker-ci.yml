@@ -1,0 +1,73 @@
+name: Docker CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run tests (Node.js)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  docker:
+    name: Build & smoke-test Docker image
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: taskpilot-webapp:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start container
+        run: docker run -d --name taskpilot -p 3000:3000 taskpilot-webapp:ci
+
+      - name: Wait until healthy
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fs http://localhost:3000/health; then echo; echo "App is up"; exit 0; fi
+            sleep 1
+          done
+          docker logs taskpilot
+          exit 1
+
+      - name: Smoke-test the API
+        run: |
+          curl -fs -X POST http://localhost:3000/api/tasks \
+            -H "Content-Type: application/json" \
+            -d '{"title":"CI smoke test","priority":"high"}'
+          echo
+          curl -fs http://localhost:3000/api/tasks | grep "CI smoke test"
+
+      - name: Show image size
+        run: docker image ls taskpilot-webapp:ci
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f taskpilot || true
