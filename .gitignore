@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Local runtime data (the JSON database)
+data/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Test coverage
+coverage/
+
+# Editors & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
