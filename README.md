@@ -1,5 +1,6 @@
 # TaskPilot-WebApp
 
+![Docker CI](https://github.com/anasAboAli/TaskPilot-WebApp/actions/workflows/docker-ci.yml/badge.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -47,11 +48,13 @@ TaskPilot-WebApp/
 │   └── public/              # web UI (index.html, app.js, styles.css)
 ├── tests/api.test.js        # API & UI tests
 ├── scripts/healthcheck.js   # used by Docker HEALTHCHECK
+├── .github/workflows/       # CI pipeline
 ├── docs/
 │   ├── screenshots/         # assignment screenshots
 │   └── notes.md             # technical notes
 ├── Dockerfile
 ├── docker-compose.yml
+├── Makefile
 ├── .dockerignore
 ├── .gitignore
 ├── .env.example
@@ -114,6 +117,23 @@ docker compose logs -f         # logs
 docker compose down            # stop & remove container
 docker compose down -v         # ...and delete the data volume
 ```
+
+## Option C — Makefile shortcuts
+
+```bash
+make help     # list all commands
+make build    # build the image
+make run      # run on http://localhost:3000
+make health   # show container health status
+make logs     # follow logs
+make stop     # stop & remove the container
+make test     # run tests inside Docker
+make clean    # remove container, image and volume
+```
+
+> On Windows, `make` is available through Git Bash/WSL — or just use the Docker commands above.
+
+---
 
 ## Configuration
 
@@ -185,7 +205,7 @@ Errors return JSON: `400` invalid JSON, `404` not found, `405` wrong method, `42
 ### Automated tests
 
 ```bash
-docker build --target test -t taskpilot-webapp:test .   # inside Docker
+make test                 # inside Docker
 # or locally (Node.js 20+):
 npm test
 ```
