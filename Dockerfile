@@ -20,7 +20,11 @@ RUN npm test
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+# `mkdir -p node_modules` guarantees the folder exists even when the project
+# has zero runtime dependencies (npm ci does not create it in that case).
+RUN npm ci --omit=dev \
+ && mkdir -p node_modules \
+ && npm cache clean --force
 
 # ============================================================
 # Stage 3 — "runtime": small final image, non-root user
