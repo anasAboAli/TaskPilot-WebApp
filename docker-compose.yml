@@ -1,0 +1,25 @@
+services:
+  taskpilot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: taskpilot-webapp:latest
+    container_name: taskpilot
+    ports:
+      - "${HOST_PORT:-3000}:${PORT:-3000}"
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-3000}
+      DATA_DIR: /app/data
+    volumes:
+      - taskpilot-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "scripts/healthcheck.js"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  taskpilot-data:
