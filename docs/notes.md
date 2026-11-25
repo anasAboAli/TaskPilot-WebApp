@@ -74,3 +74,61 @@ Other lessons:
 - Write `.gitignore` **before** the first commit — once `node_modules/` or `data/` is committed it stays in history.
 - Never commit secrets; commit a `.env.example` instead of `.env`.
 - Use a clear message convention (`feat`, `fix`, `docs`, `chore`, `docker`, `ci`, `test`) so the purpose of every commit is obvious.
+
+---
+
+# Assignment 3 — Deploying to a VPS: challenges and how I solved them
+
+**Final setup:** iximiuz Labs Ubuntu playground (cloud microVM with a browser terminal) →
+Git + Docker installed manually → repo cloned from GitHub → image built with the same Dockerfile →
+container running on port 80 → port exposed publicly through the provider's dashboard.
+
+### 1. The recommended provider no longer exists, and I have no payment card
+The suggested provider (ClawCloud Run) shut down its free tier in May 2026, so it was not an option.
+Most cloud providers (AWS, Google Cloud, Oracle, DigitalOcean…) require a credit card for
+verification, which I don't have. I compared card-free options: student cloud credits need a
+verified university mailbox, and the old browser Docker sandboxes (Play with Docker) were also
+discontinued. I chose **iximiuz Labs**, which gives a real Linux VM (own kernel, systemd, networking),
+not a container pretending to be a server, with a browser terminal — the same way of working the
+assignment describes.
+
+### 2. `permission denied` on `/var/run/docker.sock`
+After installing Docker with the official `get.docker.com` script, `docker run hello-world` failed:
+
+```
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+```
+
+**Cause:** the Docker daemon socket belongs to `root` and the `docker` group. My user (`laborant`) was
+added to the group with `usermod -aG docker`, but group membership only applies to **new login
+sessions**, and the usual shortcut `newgrp docker` was not installed on the image
+(`newgrp: command not found`).
+
+**Solution:** run Docker commands with `sudo` (e.g. `sudo docker build …`, `sudo docker run …`).
+The alternative is to log out and back in so the new group is applied. I documented both in the README.
+
+### 3. Making the app reachable from the internet
+The playground VM sits behind the provider's proxy, so it has no directly reachable public IP.
+
+- I published the container on the standard HTTP port: `-p 80:3000`, so the URL needs no port number.
+- The app already listens on `0.0.0.0` (set in the Dockerfile), which is required — binding to
+  `localhost` inside a container would make it unreachable from outside.
+- In the dashboard I used **Expose Port → 80**. Exposed ports are **private by default** (only the
+  owner can open them), so I had to switch access to **Public** before the link worked for others.
+- The provider gives an HTTPS URL, verified with the UI and with `/health` and `/api/tasks`.
+
+### 4. Free-tier limits: session time and temporary URL
+The free plan limits daily VM time and the VM is deleted when the session ends, so the public URL is
+temporary. To deal with this I:
+
+- prepared every command before starting the session, so the whole deployment took only a few minutes;
+- used `--restart unless-stopped` and a named volume (`taskpilot-data`) so the app survives container
+  restarts while the server is up;
+- captured screenshots of each step as proof, and wrote the README so the deployment can be repeated on
+  any Ubuntu server in a few commands (plus `scripts/deploy-vps.sh` to do it in one).
+
+### What I learned
+Moving from "works on my machine" to production is mostly about the environment, not the code: the
+Docker image built and passed its tests on the first try on the server — exactly because it was
+already containerized in Assignment 2. The real work was in the server itself: users and groups
+(`docker` group), ports and network exposure, and the limits of the hosting plan.
