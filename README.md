@@ -9,6 +9,23 @@
 
 ![TaskPilot UI](docs/screenshots/05-app-ui.png)
 
+## 🌐 Production URL
+
+The app is deployed on a Linux VPS (Ubuntu) and running inside Docker:
+
+| | |
+|---|---|
+| **Live app** | **https://6b06d19ae9f9e88e85e777b0-11a0f1.node-eu-11b2.iximiuz.com** |
+| **Health check** | https://6b06d19ae9f9e88e85e777b0-11a0f1.node-eu-11b2.iximiuz.com/health |
+| **API** | https://6b06d19ae9f9e88e85e777b0-11a0f1.node-eu-11b2.iximiuz.com/api/tasks |
+| **Provider** | iximiuz Labs — Ubuntu playground (cloud microVM, browser terminal) |
+| **Container** | `taskpilot` — host port `80` → container port `3000` |
+
+> **Note:** the server is a free cloud VM with a limited session time, so the public URL above is
+> temporary and stops responding when the session ends. The deployment was verified while it was live —
+> see the [production screenshots](#production-vps-assignment-3). Redeploying on any Ubuntu server takes
+> the few commands in [Deploy to Production (VPS)](#deploy-to-production-vps).
+
 ---
 
 ## Features
@@ -47,10 +64,12 @@ TaskPilot-WebApp/
 │   ├── store/taskStore.js   # JSON-file persistence
 │   └── public/              # web UI (index.html, app.js, styles.css)
 ├── tests/api.test.js        # API & UI tests
-├── scripts/healthcheck.js   # used by Docker HEALTHCHECK
+├── scripts/
+│   ├── healthcheck.js       # used by Docker HEALTHCHECK
+│   └── deploy-vps.sh        # one-shot VPS deployment
 ├── .github/workflows/       # CI pipeline
 ├── docs/
-│   ├── screenshots/         # assignment screenshots
+│   ├── screenshots/         # assignment screenshots (vps/ = Assignment 3)
 │   └── notes.md             # technical notes
 ├── Dockerfile
 ├── docker-compose.yml
@@ -132,6 +151,95 @@ make clean    # remove container, image and volume
 ```
 
 > On Windows, `make` is available through Git Bash/WSL — or just use the Docker commands above.
+
+---
+
+## Deploy to Production (VPS)
+
+These steps deploy TaskPilot on any Ubuntu VPS (tested on an Ubuntu cloud VM). The server
+clones **this GitHub repository** and builds the image with the **same Dockerfile** used locally.
+
+### 1. Create the server and open the terminal
+
+- Create an Ubuntu 22.04/24.04 instance (1 vCPU / 1 GB RAM is enough).
+- Allow inbound **HTTP (port 80)** in the provider's firewall / network security group.
+- Connect with the provider's browser terminal, or with SSH:
+
+```bash
+ssh <user>@<VPS_IP>
+```
+
+### 2. Install Git and Docker (and verify)
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git curl
+curl -fsSL https://get.docker.com | sudo sh     # official Docker install script
+sudo systemctl enable --now docker
+git --version
+docker --version
+sudo docker run --rm hello-world                  # confirms the Docker engine works
+```
+
+> **Permission note:** a normal user gets `permission denied ... /var/run/docker.sock` until it is in the
+> `docker` group *and* has logged in again. Either prefix Docker commands with `sudo` (as below), or run
+> `sudo usermod -aG docker $USER` and open a new login session.
+
+### 3. Clone the repository
+
+```bash
+git clone https://github.com/anasAboAli/TaskPilot-WebApp.git
+cd TaskPilot-WebApp
+```
+
+### 4. Build the image
+
+```bash
+sudo docker build -t taskpilot-webapp .     # the test suite runs during the build
+```
+
+### 5. Run the container
+
+```bash
+sudo docker run -d --name taskpilot \
+  --restart unless-stopped \
+  -p 80:3000 \
+  -v taskpilot-data:/app/data \
+  taskpilot-webapp
+```
+
+- `-p 80:3000` publishes the app on the standard HTTP port, so the URL needs no port number.
+- `--restart unless-stopped` brings the app back after a server reboot.
+
+### 6. Verify
+
+```bash
+sudo docker ps                          # STATUS: Up ... (healthy)
+curl http://localhost/health            # {"status":"ok",...}
+curl http://localhost/api/tasks
+```
+
+Then open **http://&lt;VPS_IP&gt;** from any browser. If the provider puts the VM behind a proxy (as iximiuz Labs does), publish port 80 from its dashboard (**Expose Port → 80 → Public**) and use the generated HTTPS URL.
+
+### Updating the deployment
+
+```bash
+cd ~/TaskPilot-WebApp
+git pull
+sudo docker build -t taskpilot-webapp .
+sudo docker rm -f taskpilot
+sudo docker run -d --name taskpilot --restart unless-stopped -p 80:3000 -v taskpilot-data:/app/data taskpilot-webapp
+```
+
+### One-command alternative
+
+`scripts/deploy-vps.sh` performs all the steps above (installs Git/Docker if missing, clones or pulls, builds, runs):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/anasAboAli/TaskPilot-WebApp/main/scripts/deploy-vps.sh | bash
+```
+
+Or with Docker Compose on the VPS: `HOST_PORT=80 docker compose up -d --build`.
 
 ---
 
@@ -226,13 +334,25 @@ More details and lessons learned: [docs/notes.md](docs/notes.md).
 
 ## Screenshots
 
+### Local (Assignment 2)
+
 | Docker build | Container running | App UI | Commit history |
 |---|---|---|---|
 | ![build](docs/screenshots/01-docker-build.png) | ![running](docs/screenshots/02-container-running.png) | ![ui](docs/screenshots/05-app-ui.png) | ![commits](docs/screenshots/06-github-commits.png) |
 
+### Production VPS (Assignment 3)
+
+| Git & Docker installed | Clone | Docker build |
+|---|---|---|
+| ![versions](docs/screenshots/vps/01-git-docker-versions.png) | ![clone](docs/screenshots/vps/02-git-clone.png) | ![build](docs/screenshots/vps/03-docker-build.png) |
+
+| Running container | Live app (browser) | API response |
+|---|---|---|
+| ![ps](docs/screenshots/vps/04-container-running.png) | ![live](docs/screenshots/vps/05-live-app-browser.png) | ![api](docs/screenshots/vps/06-live-api-response.png) |
+
 ## Attribution
 
-This project was designed and written from scratch for the OS Lab assignment (Docker & GitHub). It is not based on an existing open-source project.
+This project was designed and written from scratch for the OS Lab assignments (Docker & GitHub, then deployment to a VPS). It is not based on an existing open-source project.
 
 ## License
 
